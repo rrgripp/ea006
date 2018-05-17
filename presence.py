@@ -3,9 +3,6 @@ import RPi.GPIO as GPIO
 import csv
 import datetime
 from time import sleep
-from threading import Threadmport subprocess
-import RPi.GPIO as GPIO
-from time import sleep
 from threading import Thread
 
 # Edit these for how many people/devices you want to track
