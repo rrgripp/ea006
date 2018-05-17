@@ -1,5 +1,10 @@
 import subprocess
 import RPi.GPIO as GPIO
+import csv
+import datetime
+from time import sleep
+from threading import Threadmport subprocess
+import RPi.GPIO as GPIO
 from time import sleep
 from threading import Thread
 
@@ -45,6 +50,13 @@ def finishGPIO():
     #cleaning all GPIO's 
     GPIO.cleanup()
 
+def writeDataCSV(dataStr):
+    ofile  = open(datetime.date.today().strftime('%Y%m%d') + '.csv', 'a', newline='')
+    writer = csv.writer(ofile, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE)
+
+    writer.writerow([datetime.datetime.now().strftime('%H%M%S'), dataStr])
+
+    ofile.close()
 
 initGPIO()
 turnOff()
@@ -68,10 +80,13 @@ def whosHere(i):
 
         # If a listed device address is present print and stream
         if address[i] in output:
+            writeDataCSV('1')
+            
             print(occupant[i] + "'s device is connected to your network")
             if presentSent[i] == 0:
                 print(occupant[i] + " present streamed")
                 turnOn()
+
                 # Reset counters so another stream isn't sent if the device
                 # is still present
                 firstRun[i] = 0
@@ -81,15 +96,21 @@ def whosHere(i):
                 sleep(5)
             else:
                 # If a stream's already been sent, just wait for 15 minutes
+                
+                writeDataCSV('0')
+                
                 counter[i] = 0
                 sleep(5)
         # If a listed device address is not present, print and stream
         else:
+            writeDataCSV('0')
+            
             print(occupant[i] + "'s device is not present")
             # Only consider a device offline if it's counter has reached 5
             # This is the same as 15 minutes passing
             if counter[i] == 5 or firstRun[i] == 1:
                 turnOff()
+                
                 firstRun[i] = 0
                 if notPresentSent[i] == 0:
                     # Stream that device is not present
@@ -130,6 +151,7 @@ try:
         global output
         # Assign list of devices on the network to "output"
         output = subprocess.getoutput("sudo arp-scan -l")
+        #output = subprocess.check_output("sudo arp-scan -l", shell=True)
         # Wait 5 seconds between scans
         sleep(5)
 
