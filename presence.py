@@ -6,10 +6,10 @@ from time import sleep
 from threading import Thread
 
 # Edit these for how many people/devices you want to track
-occupant = ["RUITER'S IPHONE"]
+occupant = ["NOME"]
 
 # MAC addresses for our phones
-address = ["4c:57:ca:ca:9d:45"]
+address = ["00:00:00:00:00:00"]
 
 #GPIO pin that we use 
 pin = 14
