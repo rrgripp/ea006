@@ -6,10 +6,10 @@ from time import sleep
 from threading import Thread
 
 # Edit these for how many people/devices you want to track
-occupant = ["NOME"]
+occupant = ["RUITER'S IPHONE"]
 
 # MAC addresses for our phones
-address = ["00:00:00:00:00:00"]
+address = ["4c:57:ca:ca:9d:45"]
 
 #GPIO pin that we use 
 pin = 14
@@ -46,12 +46,22 @@ def turnOff():
 def finishGPIO():
     #cleaning all GPIO's 
     GPIO.cleanup()
+    
+
+def writeDataLog(dataStr):
+    ofile  = open('LOG ' + datetime.date.today().strftime('%Y%m%d'), 'a')
+
+    ofile.write('\n -------------------------------------------------------------- \n')
+    ofile.write(datetime.datetime.now().strftime('%H:%M:%S') + ':\n')
+    ofile.write(dataStr)
+
+    ofile.close()
 
 def writeDataCSV(dataStr):
-    ofile  = open(datetime.date.today().strftime('%Y%m%d') + '.csv', 'a', newline='')
+    ofile  = open(datetime.date.today().strftime('%Y%m%d') + '.csv', 'a')
     writer = csv.writer(ofile, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE)
 
-    writer.writerow([datetime.datetime.now().strftime('%H%M%S'), dataStr])
+    writer.writerow([datetime.datetime.now().strftime('%H:%M:%S'), dataStr])
 
     ofile.close()
 
@@ -62,7 +72,7 @@ turnOff()
 def whosHere(i):
 
     # 5 second pause to allow main thread to finish arp-scan and populate output
-    sleep(10)
+    sleep(30)
 
     # Loop through checking for devices and counting if they're not present
     while True:
@@ -75,6 +85,7 @@ def whosHere(i):
         else:
             pass
 
+        writeDataLog(output);
         # If a listed device address is present print and stream
         if address[i] in output:
             writeDataCSV('1')
@@ -90,14 +101,12 @@ def whosHere(i):
                 presentSent[i] = 1
                 notPresentSent[i] = 0
                 counter[i] = 0
-                sleep(5)
+                sleep(30)
             else:
                 # If a stream's already been sent, just wait for 15 minutes
-                
-                writeDataCSV('0')
-                
                 counter[i] = 0
-                sleep(5)
+                sleep(30)
+                
         # If a listed device address is not present, print and stream
         else:
             writeDataCSV('0')
@@ -120,13 +129,13 @@ def whosHere(i):
                 else:
                     # If a stream's already been sent, wait 5 seconds
                     counter[i] = 0
-                    sleep(5)
+                    sleep(30)
             # Count how many 5 second intervals have happened since the device 
             # disappeared from the network
             else:
                 counter[i] = counter[i] + 1
                 print(occupant[i] + "'s counter at " + str(counter[i]))
-                sleep(5)
+                sleep(30)
 
 
 # Main thread
@@ -147,10 +156,13 @@ try:
         # Make output global so the threads can see it
         global output
         # Assign list of devices on the network to "output"
-        output = subprocess.getoutput("sudo arp-scan -l")
-        #output = subprocess.check_output("sudo arp-scan -l", shell=True)
+        #output = subprocess.getoutput("sudo arp-scan -lI wlan0")
+        #output += subprocess.getoutput("sudo arp-scan -lI eth0")
+        writeDataLog("Running ARP Scan Process ...")
+        output = subprocess.check_output("sudo arp-scan -lI wlan0", shell=True)
+        output += subprocess.check_output("sudo arp-scan -lI eth0", shell=True)
         # Wait 5 seconds between scans
-        sleep(5)
+        sleep(30)
 
 except KeyboardInterrupt:
     # On a keyboard interrupt signal threads to exit
